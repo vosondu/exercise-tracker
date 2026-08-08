@@ -1,0 +1,25 @@
+{
+  "name": "Daily Movement Tracker",
+  "short_name": "Movement",
+  "description": "Track your daily exercise routine, full or floor version, with a running streak.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F3F1EA",
+  "theme_color": "#2B2E28",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

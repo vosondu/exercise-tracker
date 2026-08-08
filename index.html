@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Movement Tracker</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#2B2E28">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Movement">
+<style>
+  :root {
+    --bg: #F3F1EA;
+    --ink: #2B2E28;
+    --muted: #7A8471;
+    --muted-2: #9CA68E;
+    --card: #FFFFFF;
+    --border: #E3E0D3;
+    --full: #5C7A5E;
+    --full-light: #EEF3EC;
+    --floor: #B8A46A;
+    --floor-light: #F0E9D2;
+    --dark: #2B2E28;
+    --dark-2: #C9CDB7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+  }
+  .wrap {
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 32px 20px;
+  }
+  .eyebrow {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    margin: 0 0 4px 0;
+  }
+  h1 {
+    font-family: Georgia, serif;
+    font-size: 26px;
+    font-weight: 600;
+    margin: 0 0 32px 0;
+  }
+  .streak-card {
+    background: var(--dark);
+    border-radius: 18px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .streak-label {
+    color: var(--dark-2);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 4px 0;
+  }
+  .streak-num {
+    color: var(--bg);
+    font-size: 32px;
+    font-weight: 600;
+    margin: 0;
+  }
+  .streak-unit {
+    font-size: 15px;
+    font-weight: 400;
+    color: #9CA68E;
+  }
+  .streak-emoji { font-size: 36px; }
+
+  .section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 0 0 8px 0;
+  }
+
+  .strip { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
+  .day-box {
+    width: 16px;
+    height: 32px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    background: var(--border);
+  }
+  .day-box.full { background: var(--full); }
+  .day-box.floor { background: var(--floor); }
+  .day-box.today { outline: 2px solid var(--ink); outline-offset: 1px; }
+
+  .legend-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .legend { display: flex; gap: 16px; font-size: 12px; color: var(--muted); }
+  .legend span { display: flex; align-items: center; gap: 4px; }
+  .swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .hint { font-size: 12px; color: var(--muted-2); }
+
+  .edit-panel {
+    margin-top: 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+  }
+  .edit-date { font-size: 14px; font-weight: 500; margin: 0 0 12px 0; }
+  .edit-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    border: none;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .btn-full { background: var(--full); color: white; }
+  .btn-floor { background: var(--floor); color: white; }
+  .btn-clear { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+  .btn-cancel { background: transparent; color: var(--muted-2); }
+
+  .status-card {
+    background: var(--card);
+    border-radius: 18px;
+    padding: 24px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    margin-top: 24px;
+  }
+  .status-title { font-size: 17px; font-weight: 600; margin: 0 0 4px 0; }
+  .status-sub { font-size: 13px; color: var(--muted); margin: 0 0 16px 0; }
+  .undo-link { background: none; border: none; font-size: 12px; color: #A3785A; text-decoration: underline; cursor: pointer; }
+
+  .picker { margin-top: 24px; display: flex; flex-direction: column; gap: 12px; }
+  .pick-btn {
+    border: none;
+    border-radius: 18px;
+    padding: 16px 20px;
+    text-align: left;
+    cursor: pointer;
+    color: white;
+  }
+  .pick-btn.full { background: var(--full); }
+  .pick-btn.floor { background: var(--floor); }
+  .pick-title { font-size: 16px; font-weight: 600; margin: 0 0 2px 0; }
+  .pick-sub { font-size: 13px; margin: 0; opacity: 0.85; }
+  .no-zero { text-align: center; font-size: 12px; color: var(--muted-2); margin-top: 8px; }
+
+  .routine-card {
+    margin-top: 24px;
+    background: var(--card);
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .routine-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 0 0 12px 0;
+  }
+  .exercise-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+  .exercise-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+  }
+  .exercise-btn.checked { border-color: var(--full); background: var(--full-light); }
+  .ex-name { font-size: 14px; font-weight: 500; }
+  .ex-detail { font-size: 12px; color: var(--muted); }
+  .routine-actions { display: flex; gap: 8px; }
+  .routine-actions button { flex: 1; padding: 12px; border-radius: 12px; font-size: 14px; font-weight: 500; border: none; cursor: pointer; }
+  .back-btn { background: transparent; border: 1px solid var(--border) !important; color: var(--muted); }
+  .done-btn { color: white; }
+  .done-btn.full { background: var(--full); }
+  .done-btn.floor { background: var(--floor); }
+
+  .error-msg { color: #DC2626; font-size: 12px; text-align: center; margin-top: 16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Daily Movement</p>
+  <h1>Show up today</h1>
+
+  <div class="streak-card">
+    <div>
+      <p class="streak-label">Current streak</p>
+      <p class="streak-num"><span id="streakNum">0</span> <span class="streak-unit" id="streakUnit">days</span></p>
+    </div>
+    <div class="streak-emoji" id="streakEmoji">🌱</div>
+  </div>
+
+  <p class="section-label">Last 21 days</p>
+  <div class="strip" id="strip"></div>
+  <div class="legend-row">
+    <div class="legend">
+      <span><span class="swatch" style="background:var(--full)"></span> Full</span>
+      <span><span class="swatch" style="background:var(--floor)"></span> Floor</span>
+    </div>
+    <span class="hint">Tap a day to edit</span>
+  </div>
+  <div id="editPanel"></div>
+
+  <div id="mainArea"></div>
+
+  <div id="errorMsg"></div>
+</div>
+
+<script>
+  const FULL = [
+    { name: "Jumping jacks", detail: "3 × 30 sec" },
+    { name: "Squats", detail: "3 × 15" },
+    { name: "Push-ups", detail: "2 × 10" },
+    { name: "Sit-ups", detail: "2 × 15" },
+    { name: "Slow walk", detail: "10 min" },
+    { name: "Stretch", detail: "5 min" },
+  ];
+  const FLOOR = [
+    { name: "Jumping jacks", detail: "20" },
+    { name: "Squats", detail: "5" },
+    { name: "Push-ups", detail: "5" },
+    { name: "Sit-ups", detail: "5" },
+    { name: "Stretch", detail: "1 min" },
+  ];
+
+  const STORAGE_KEY = "exercise-log-v1";
+
+  function todayKey(d = new Date()) {
+    const off = d.getTimezoneOffset();
+    const local = new Date(d.getTime() - off * 60000);
+    return local.toISOString().slice(0, 10);
+  }
+
+  function lastNDays(n) {
+    const out = [];
+    const d = new Date();
+    for (let i = n - 1; i >= 0; i--) {
+      const dd = new Date(d);
+      dd.setDate(d.getDate() - i);
+      out.push(todayKey(dd));
+    }
+    return out;
+  }
+
+  function loadLog() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function saveLog(log) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(log));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  let log = loadLog();
+  let mode = null;      // 'full' | 'floor' | null  (picking today's routine)
+  let checked = [];      // indices checked in current routine
+  let editingDay = null; // date string being edited
+
+  function computeStreak() {
+    let streak = 0;
+    let d = new Date();
+    if (!log[todayKey(d)]) {
+      d.setDate(d.getDate() - 1);
+    }
+    while (true) {
+      const k = todayKey(d);
+      if (log[k]) {
+        streak++;
+        d.setDate(d.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+    return streak;
+  }
+
+  function showError(msg) {
+    document.getElementById("errorMsg").innerHTML = msg
+      ? `<p class="error-msg">${msg}</p>` : "";
+  }
+
+  function persist() {
+    if (!saveLog(log)) {
+      showError("Couldn't save — your browser may be blocking local storage.");
+    } else {
+      showError("");
+    }
+  }
+
+  function setDayStatus(dateKey, status) {
+    if (status === null) {
+      delete log[dateKey];
+    } else {
+      log[dateKey] = status;
+    }
+    persist();
+    editingDay = null;
+    render();
+  }
+
+  function undoToday() {
+    delete log[todayKey()];
+    persist();
+    render();
+  }
+
+  function completeRoutine() {
+    log[todayKey()] = mode;
+    persist();
+    mode = null;
+    checked = [];
+    render();
+  }
+
+  function renderStrip() {
+    const key = todayKey();
+    const days = lastNDays(21);
+    const strip = document.getElementById("strip");
+    strip.innerHTML = "";
+    days.forEach((d) => {
+      const status = log[d];
+      const btn = document.createElement("button");
+      btn.className = "day-box" + (status ? " " + status : "") + (d === key ? " today" : "");
+      btn.title = d + (status ? " — " + status : "");
+      btn.onclick = () => { editingDay = d; render(); };
+      strip.appendChild(btn);
+    });
+  }
+
+  function renderEditPanel() {
+    const panel = document.getElementById("editPanel");
+    if (!editingDay) { panel.innerHTML = ""; return; }
+    const isToday = editingDay === todayKey();
+    panel.innerHTML = `
+      <div class="edit-panel">
+        <p class="edit-date">${isToday ? "Today" : editingDay}</p>
+        <div class="edit-buttons">
+          <button class="btn btn-full" id="editFull">Mark Full</button>
+          <button class="btn btn-floor" id="editFloor">Mark Floor</button>
+          <button class="btn btn-clear" id="editClear">Clear</button>
+          <button class="btn btn-cancel" id="editCancel">Cancel</button>
+        </div>
+      </div>
+    `;
+    document.getElementById("editFull").onclick = () => setDayStatus(editingDay, "full");
+    document.getElementById("editFloor").onclick = () => setDayStatus(editingDay, "floor");
+    document.getElementById("editClear").onclick = () => setDayStatus(editingDay, null);
+    document.getElementById("editCancel").onclick = () => { editingDay = null; render(); };
+  }
+
+  function renderMain() {
+    const key = todayKey();
+    const todayStatus = log[key] || null;
+    const area = document.getElementById("mainArea");
+
+    if (todayStatus && !mode) {
+      area.innerHTML = `
+        <div class="status-card">
+          <p class="status-title">${todayStatus === "full" ? "Full routine done ✅" : "Floor version done ✅"}</p>
+          <p class="status-sub">You showed up today. That's the whole job.</p>
+          <button class="undo-link" id="undoBtn">Undo today's entry</button>
+        </div>
+      `;
+      document.getElementById("undoBtn").onclick = undoToday;
+      return;
+    }
+
+    if (!mode) {
+      area.innerHTML = `
+        <div class="picker">
+          <button class="pick-btn full" id="pickFull">
+            <p class="pick-title">Full routine</p>
+            <p class="pick-sub">~20–25 min, all six moves</p>
+          </button>
+          <button class="pick-btn floor" id="pickFloor">
+            <p class="pick-title">Floor version</p>
+            <p class="pick-sub">Under 5 min — the non-negotiable</p>
+          </button>
+        </div>
+        <p class="no-zero">No zero days. Pick one.</p>
+      `;
+      document.getElementById("pickFull").onclick = () => { mode = "full"; checked = []; render(); };
+      document.getElementById("pickFloor").onclick = () => { mode = "floor"; checked = []; render(); };
+      return;
+    }
+
+    const list = mode === "floor" ? FLOOR : FULL;
+    const itemsHtml = list.map((item, i) => `
+      <button class="exercise-btn${checked.includes(i) ? " checked" : ""}" data-i="${i}">
+        <span class="ex-name">${item.name}</span>
+        <span class="ex-detail">${item.detail}</span>
+      </button>
+    `).join("");
+
+    area.innerHTML = `
+      <div class="routine-card">
+        <p class="routine-label">${mode === "full" ? "Full routine" : "Floor version"}</p>
+        <div class="exercise-list">${itemsHtml}</div>
+        <div class="routine-actions">
+          <button class="back-btn" id="backBtn">Back</button>
+          <button class="done-btn ${mode}" id="doneBtn">Mark done</button>
+        </div>
+      </div>
+    `;
+
+    area.querySelectorAll(".exercise-btn").forEach((btn) => {
+      btn.onclick = () => {
+        const i = parseInt(btn.getAttribute("data-i"), 10);
+        checked = checked.includes(i) ? checked.filter((x) => x !== i) : [...checked, i];
+        render();
+      };
+    });
+    document.getElementById("backBtn").onclick = () => { mode = null; checked = []; render(); };
+    document.getElementById("doneBtn").onclick = completeRoutine;
+  }
+
+  function render() {
+    const streak = computeStreak();
+    document.getElementById("streakNum").textContent = streak;
+    document.getElementById("streakUnit").textContent = "day" + (streak === 1 ? "" : "s");
+    document.getElementById("streakEmoji").textContent = streak > 0 ? "🔥" : "🌱";
+    renderStrip();
+    renderEditPanel();
+    renderMain();
+  }
+
+  render();
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").catch(() => {
+        // offline support just won't be available; app still works online
+      });
+    });
+  }
+</script>
+</body>
+</html>
